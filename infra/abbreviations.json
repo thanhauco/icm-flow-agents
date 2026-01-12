@@ -1,0 +1,11 @@
+{
+  "applicationInsights": "appi-",
+  "containerApp": "ca-",
+  "containerAppsEnvironment": "cae-",
+  "containerRegistry": "cr",
+  "cosmosDbAccount": "cosmos-",
+  "logAnalyticsWorkspace": "log-",
+  "managedIdentity": "id-",
+  "resourceGroup": "rg-",
+  "searchService": "srch-"
+}
