@@ -209,3 +209,5 @@ def _offline_completion(system_prompt: str, user_prompt: str) -> LLMResponse:
     return LLMResponse(content, prompt_tokens, completion_tokens)
 
 # Enhanced retry logic with exponential backoff and error classification
+
+# Enhanced retry logic with exponential backoff and error classification
