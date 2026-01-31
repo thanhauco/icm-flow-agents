@@ -46,3 +46,5 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 # Chore: update metadata and bump minimal requirements
+
+# Chore: update metadata and bump minimal requirements
