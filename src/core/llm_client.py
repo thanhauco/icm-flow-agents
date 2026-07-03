@@ -58,25 +58,35 @@ class LLMClient:
     def __init__(self) -> None:
         self._settings = get_settings()
         self._client: Any | None = None
-        self._live = self._settings.has_azure_openai
+        self._nvidia = self._settings.has_nvidia
+        self._live = self._settings.has_azure_openai or self._nvidia
         if self._live:
             try:
-                from azure.identity import get_bearer_token_provider
-                from openai import AsyncAzureOpenAI
+                if self._nvidia:
+                    # NVIDIA Build is OpenAI-compatible — use the plain async client.
+                    from openai import AsyncOpenAI
 
-                kwargs: dict[str, Any] = {
-                    "azure_endpoint": self._settings.azure_openai_endpoint,
-                    "api_version": self._settings.azure_openai_api_version,
-                }
-                if self._settings.azure_openai_api_key:
-                    kwargs["api_key"] = self._settings.azure_openai_api_key
-                else:
-                    kwargs["azure_ad_token_provider"] = get_bearer_token_provider(
-                        get_azure_credential(),
-                        "https://cognitiveservices.azure.com/.default",
+                    self._client = AsyncOpenAI(
+                        api_key=self._settings.nvidia_api_key,
+                        base_url=self._settings.nvidia_base_url,
                     )
+                else:
+                    from azure.identity import get_bearer_token_provider
+                    from openai import AsyncAzureOpenAI
 
-                self._client = AsyncAzureOpenAI(**kwargs)
+                    kwargs: dict[str, Any] = {
+                        "azure_endpoint": self._settings.azure_openai_endpoint,
+                        "api_version": self._settings.azure_openai_api_version,
+                    }
+                    if self._settings.azure_openai_api_key:
+                        kwargs["api_key"] = self._settings.azure_openai_api_key
+                    else:
+                        kwargs["azure_ad_token_provider"] = get_bearer_token_provider(
+                            get_azure_credential(),
+                            "https://cognitiveservices.azure.com/.default",
+                        )
+
+                    self._client = AsyncAzureOpenAI(**kwargs)
             except Exception as exc:  # pragma: no cover - import/config guard
                 logger.warning("Falling back to offline LLM stub: %s", exc)
                 self._live = False
@@ -98,11 +108,14 @@ class LLMClient:
         if not self._live or self._client is None:
             return _offline_completion(system_prompt, user_prompt)
 
-        deployment = (
-            self._settings.azure_openai_chat_deployment_name
-            if use_chat_model
-            else self._settings.azure_openai_deployment_name
-        )
+        if self._nvidia:
+            deployment = self._settings.nvidia_model
+        else:
+            deployment = (
+                self._settings.azure_openai_chat_deployment_name
+                if use_chat_model
+                else self._settings.azure_openai_deployment_name
+            )
         kwargs: dict[str, Any] = {
             "model": deployment,
             "temperature": temperature,

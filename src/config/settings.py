@@ -104,6 +104,18 @@ class Settings(BaseSettings):
         default="on-call-sre", description="Team paged when an incident is escalated."
     )
 
+    # ------------------------------------------------------------------
+    # NVIDIA Build (OpenAI-compatible) — used for chat when nvidia_api_key is set.
+    # ------------------------------------------------------------------
+    nvidia_api_key: str = Field(default="")
+    nvidia_base_url: str = Field(default="https://integrate.api.nvidia.com/v1")
+    nvidia_model: str = Field(default="z-ai/glm-5.2")
+
+    @property
+    def has_nvidia(self) -> bool:
+        """Whether NVIDIA Build (OpenAI-compatible) is configured."""
+        return bool(self.nvidia_api_key)
+
     @property
     def has_azure_openai(self) -> bool:
         """Whether live Azure OpenAI credentials are configured."""
